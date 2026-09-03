@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-FLUTTER_VERSION="3.44.0"
+FLUTTER_VERSION="3.47.2"
 
 echo "==> Render working directory:"
 pwd
