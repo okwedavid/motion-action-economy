@@ -4,6 +4,9 @@ set -euo pipefail
 
 FLUTTER_VERSION="3.44.0"
 
+echo "==> Render working directory:"
+pwd
+
 echo "==> Installing Flutter ${FLUTTER_VERSION}..."
 
 cd /tmp
@@ -19,6 +22,22 @@ export PATH="/tmp/flutter/bin:$PATH"
 echo "==> Flutter version:"
 flutter --version
 
+# IMPORTANT:
+# Render's root directory is apps/mobile.
+# Return to the Flutter project before running pub/build commands.
+cd "$OLDPWD"
+
+echo "==> Flutter project directory:"
+pwd
+
+echo "==> Checking Flutter project..."
+
+if [ ! -f "pubspec.yaml" ]; then
+  echo "ERROR: pubspec.yaml not found."
+  echo "Current directory: $(pwd)"
+  exit 1
+fi
+
 echo "==> Getting Dart dependencies..."
 flutter pub get
 
@@ -26,7 +45,7 @@ echo "==> Building Flutter Web..."
 
 flutter build web --release \
   --dart-define="API_BASE_URL=${API_BASE_URL}" \
-  --dart-define="DEMO_MODE=${DEMO_MODE:-false}"
+  --dart-define="DEMO_MODE=${DEMO_MODE:-true}"
 
 echo "==> Flutter Web build complete."
 
