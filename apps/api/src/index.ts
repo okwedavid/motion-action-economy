@@ -14,6 +14,8 @@ import { authRouter } from './http/routes/auth.js';
 import { missionsRouter } from './http/routes/missions.js';
 import { homeRouter } from './http/routes/home.js';
 import { reputationRouter } from './http/routes/reputation.js';
+import { walletRouter } from './http/routes/wallet.js';
+import { bmoniWebhookMiddleware } from './http/routes/bmoniWebhook.js';
 
 export function createApp(): Express {
   const app = express();
@@ -22,6 +24,10 @@ export function createApp(): Express {
   app.set('trust proxy', 1);
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigins, credentials: true }));
+
+  // BMONI webhook must see RAW bytes, so mount its raw parser before JSON.
+  app.post('/webhooks/bmoni', ...bmoniWebhookMiddleware(services));
+
   app.use(express.json({ limit: '1mb' }));
   app.use(
     rateLimit({
@@ -40,6 +46,7 @@ export function createApp(): Express {
   app.use('/home', homeRouter(services));
   app.use('/missions', missionsRouter(services));
   app.use('/reputation', reputationRouter(services));
+  app.use('/wallet', walletRouter(services));
 
   app.use(notFound);
   app.use(errorHandler);

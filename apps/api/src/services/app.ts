@@ -4,6 +4,8 @@ import { HomeService } from './home.js';
 import { MissionsService } from './missions.js';
 import { ProofEngine, type ProofEngineDb } from './proofEngine.js';
 import { ReputationService } from './reputation.js';
+import { WalletService } from './wallet.js';
+import { buildBmoniGateway, type BmoniGateway } from '../integrations/bmoni/index.js';
 
 export interface AppServices {
   repos: Repos;
@@ -12,6 +14,8 @@ export interface AppServices {
   missions: MissionsService;
   reputation: ReputationService;
   proofs: ProofEngine;
+  wallet: WalletService;
+  bmoni: BmoniGateway;
 }
 
 /**
@@ -20,6 +24,7 @@ export interface AppServices {
  */
 export function createServices(db: ProofEngineDb): AppServices {
   const repos = createRepos(db);
+  const bmoni = buildBmoniGateway();
   return {
     repos,
     auth: new AuthService(repos.users, repos.sessions),
@@ -27,5 +32,7 @@ export function createServices(db: ProofEngineDb): AppServices {
     missions: new MissionsService(repos.missions),
     reputation: new ReputationService(repos),
     proofs: new ProofEngine(db),
+    wallet: new WalletService(repos, bmoni),
+    bmoni,
   };
 }
