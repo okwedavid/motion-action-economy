@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: motion
+      POSTGRES_PASSWORD: motion
+      POSTGRES_DB: motion
+    ports:
+      - "5432:5432"
+    volumes:
+      - motion_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U motion -d motion"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      APP_URL: http://localhost:4000
+      DATABASE_URL: postgresql://motion:motion@db:5432/motion
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-before-production-use-a-long-random-secret}
+      DEMO_MODE: "true"
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8080
+      BMONI_BASE_URL: https://embedded-dev.bmoni.com
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+
+volumes:
+  motion_pgdata:
