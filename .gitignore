@@ -1,0 +1,65 @@
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Node / TypeScript ---
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+coverage/
+.npm/
+
+# --- Flutter / Dart ---
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/android/.gradle/
+**/android/local.properties
+**/android/key.properties
+**/android/app/*.jks
+**/android/app/*.keystore
+**/android/captures/
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceAccounts/
+**/macos/Flutter/ephemeral/
+*.iml
+
+# --- React Native (if later added) ---
+.metals/
+.expo/
+
+# --- Android signing secrets ---
+*.keystore
+*.jks
+**/keys/
+**/secrets/
+service-account.json
+**/play-service-account.json
+
+# --- Logs ---
+*.log
+logs/
+npm-debug.log*
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.idea/
+.vscode/
+*.code-workspace
+
+# --- Play Store / Fastlane ---
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots/
+**/fastlane/metadata/play.yml.bak
