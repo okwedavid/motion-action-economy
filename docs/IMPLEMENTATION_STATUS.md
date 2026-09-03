@@ -87,6 +87,7 @@ Legend: ✅ COMPLETE & verified · ◐ PARTIAL / blocked externally · ❌ MISSI
 | Secrets | ✅ | `.env` gitignored; logger redacts sensitive fields |
 | **BMONI webhook security** | ✅ | HMAC-SHA256 over raw request bytes (`express.raw` mounted before global `express.json`), constant-time compare with length check first, `X-Webhook-Id` dedup, correct 2xx/4xx/5xx ack semantics, 10s timeout; secret from `BMONI_WEBHOOK_SECRET` |
 | Docker hardening | ✅ | non-root `USER app`, healthcheck, `.dockerignore`, compose `db` health-gated start |
+| Dependency audit | ⚠️ | `npm audit` → **3 moderate** `qs` advisories (array-limit-bypass DoS) in the `express@4.22.2`/`body-parser@1.20.6` chain. No non-breaking fix available (would require a major Express 5 upgrade). Latest 4.x installed. **Deferred & documented:** resolve by migrating to Express 5 / newer `qs`, or revisit when `npm audit fix` resolves. |
 
 ---
 

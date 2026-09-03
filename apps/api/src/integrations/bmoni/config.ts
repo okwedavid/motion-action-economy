@@ -23,13 +23,11 @@ export interface BmoniConfig {
   webhookSecret?: string;
 }
 
-/** The docs list this shared key as valid for the development environment only. */
-const DEMO_SANDBOX_KEY = 'pk_a025cacbf33a_76fb864113f3540909de5b1da39cc146906e35b1c6d4d1e4';
-
 export function bmoniConfig(): BmoniConfig {
   const mode = (process.env.BMONI_MODE ?? 'mock') as BmoniConfig['mode'];
   const baseUrl = config.bmoni.baseUrl || (mode === 'live' ? 'https://embedded.bmoni.com' : 'https://embedded-dev.bmoni.com');
-  const apiKey = config.bmoni.apiKey || (mode === 'sandbox' ? DEMO_SANDBOX_KEY : '');
+  const demoSandboxKey = process.env.BMONI_DEMO_SANDBOX_KEY ?? '';
+  const apiKey = config.bmoni.apiKey || (mode === 'sandbox' ? demoSandboxKey : '');
 
   if (mode === 'live' && !config.bmoni.apiKey) {
     throw new Error(
