@@ -172,6 +172,23 @@ class ActivityItem {
       );
 }
 
+/// `reputation` as returned by the backend `/home` endpoint.
+///
+/// The API contract is `{ score: number; level: LevelInfo }` — NOT a flat
+/// LevelInfo. Parsing the nested `level` object as a number used to throw
+/// `TypeError: ... is not a subtype of type 'num?'` on Home.
+class HomeReputation {
+  final int score;
+  final LevelInfo level;
+
+  const HomeReputation({required this.score, required this.level});
+
+  factory HomeReputation.fromJson(Map<String, dynamic> j) => HomeReputation(
+        score: (j['score'] as num?)?.toInt() ?? 0,
+        level: LevelInfo.fromJson(Map<String, dynamic>.from(j['level'] as Map? ?? {})),
+      );
+}
+
 class HomeWallet {
   final bool available;
   final String currency;
@@ -190,7 +207,7 @@ class HomeSummary {
   final String greeting;
   final int points;
   final LevelInfo level;
-  final LevelInfo reputation;
+  final HomeReputation reputation;
   final Mission? recommendedMission;
   final List<ActivityItem> recentActivity;
   final HomeWallet? wallet;
@@ -211,7 +228,7 @@ class HomeSummary {
         greeting: (j['greeting'] ?? '') as String,
         points: (j['points'] as num?)?.toInt() ?? 0,
         level: LevelInfo.fromJson(Map<String, dynamic>.from(j['level'] as Map? ?? {})),
-        reputation: LevelInfo.fromJson(Map<String, dynamic>.from(j['reputation'] as Map? ?? {})),
+        reputation: HomeReputation.fromJson(Map<String, dynamic>.from(j['reputation'] as Map? ?? {})),
         recommendedMission: j['recommendedMission'] == null
             ? null
             : Mission.fromJson(j['recommendedMission'] as Map<String, dynamic>),
