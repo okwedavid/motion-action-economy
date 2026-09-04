@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -10,7 +11,8 @@ class ApiException implements Exception {
   final String code;
   final String message;
 
-  const ApiException({required this.statusCode, required this.code, required this.message});
+  const ApiException(
+      {required this.statusCode, required this.code, required this.message});
 
   @override
   String toString() => message;
@@ -18,9 +20,12 @@ class ApiException implements Exception {
 
 class ApiClient {
   final String baseUrl;
+  final Duration timeout;
   String? _token;
 
-  ApiClient({String? baseUrl}) : baseUrl = baseUrl ?? AppConfig.apiBaseUrl;
+  ApiClient({String? baseUrl, Duration? timeout})
+      : baseUrl = baseUrl ?? AppConfig.apiBaseUrl,
+        timeout = timeout ?? const Duration(seconds: 15);
 
   set token(String? value) => _token = value;
 
@@ -40,22 +45,47 @@ class ApiClient {
   }
 
   Future<dynamic> get(String path, {Map<String, String>? query}) async {
-    final res = await http.get(_uri(path, query), headers: _headers(json: false));
+    final res = await _send(
+      () => http.get(_uri(path, query), headers: _headers(json: false)),
+    );
     return _decode(res);
   }
 
   Future<dynamic> post(String path, {Object? body}) async {
-    final res = await http.post(
-      _uri(path),
-      headers: _headers(),
-      body: body == null ? null : jsonEncode(body),
+    final res = await _send(
+      () => http.post(
+        _uri(path),
+        headers: _headers(),
+        body: body == null ? null : jsonEncode(body),
+      ),
     );
     return _decode(res);
   }
 
   Future<dynamic> postForm(String path, Map<String, String> fields) async {
-    final res = await http.post(_uri(path), headers: _headers(json: false), body: fields);
+    final res = await _send(
+      () => http.post(_uri(path), headers: _headers(json: false), body: fields),
+    );
     return _decode(res);
+  }
+
+  Future<http.Response> _send(Future<http.Response> Function() request) async {
+    try {
+      return await request().timeout(timeout);
+    } on TimeoutException {
+      throw ApiException(
+        statusCode: 0,
+        code: 'TIMEOUT',
+        message: 'The server took too long to respond. Please try again.',
+      );
+    } on http.ClientException {
+      // Thrown on both mobile and web for connection/DNS/network failures.
+      throw ApiException(
+        statusCode: 0,
+        code: 'NETWORK',
+        message: 'Could not reach the server. Please check your connection.',
+      );
+    }
   }
 
   dynamic _decode(http.Response res) {
@@ -73,7 +103,9 @@ class ApiClient {
     final err = map['error'];
     throw ApiException(
       statusCode: res.statusCode,
-      code: (err is Map && err['code'] != null) ? err['code'].toString() : 'UNKNOWN',
+      code: (err is Map && err['code'] != null)
+          ? err['code'].toString()
+          : 'UNKNOWN',
       message: (err is Map && err['message'] != null)
           ? err['message'].toString()
           : 'Request failed (${res.statusCode})',

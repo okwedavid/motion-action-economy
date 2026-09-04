@@ -5,8 +5,9 @@ import 'api/api_client.dart';
 import 'state/auth_state.dart';
 import 'state/session_store.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final auth = AuthState(store: SessionStore(), client: ApiClient());
+  await auth.bootstrap();
   runApp(MotionApp(auth: auth));
 }

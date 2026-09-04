@@ -4,6 +4,12 @@ set -euo pipefail
 
 FLUTTER_VERSION="3.47.2"
 
+# Default the backend base URL to the MOTION production API unless explicitly
+# set in the build environment. This keeps the Render build deterministic:
+# an unset or empty API_BASE_URL would otherwise bake an empty/invalid URL into
+# the web build and the app would never reach the backend.
+API_BASE_URL="${API_BASE_URL:-https://motion-action-economy.onrender.com}"
+
 echo "==> Render working directory:"
 pwd
 
@@ -42,6 +48,7 @@ echo "==> Getting Dart dependencies..."
 flutter pub get
 
 echo "==> Building Flutter Web..."
+echo "    API_BASE_URL=${API_BASE_URL}"
 
 flutter build web --release \
   --dart-define="API_BASE_URL=${API_BASE_URL}" \

@@ -29,8 +29,50 @@ class MotionApp extends StatelessWidget {
               return AuthScreen(auth: auth);
             case AuthStatus.authenticated:
               return MainShell(auth: auth);
+            case AuthStatus.error:
+              return _ErrorScreen(auth: auth);
           }
         },
+      ),
+    );
+  }
+}
+
+class _ErrorScreen extends StatelessWidget {
+  final AuthState auth;
+  const _ErrorScreen({required this.auth});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off,
+                  color: AppColors.destructive, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                auth.errorMessage ?? 'Could not reach the server.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.ink),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () => auth.retryBootstrap(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => auth.continueUnauthenticated(),
+                child: const Text('Go to login'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -73,11 +115,26 @@ class _MainShellState extends State<MainShell> {
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.explore_outlined), selectedIcon: Icon(Icons.explore), label: 'Missions'),
-          NavigationDestination(icon: Icon(Icons.local_fire_department_outlined), selectedIcon: Icon(Icons.local_fire_department), label: 'Reputation'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.explore_outlined),
+              selectedIcon: Icon(Icons.explore),
+              label: 'Missions'),
+          NavigationDestination(
+              icon: Icon(Icons.local_fire_department_outlined),
+              selectedIcon: Icon(Icons.local_fire_department),
+              label: 'Reputation'),
+          NavigationDestination(
+              icon: Icon(Icons.account_balance_wallet_outlined),
+              selectedIcon: Icon(Icons.account_balance_wallet),
+              label: 'Wallet'),
+          NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'Profile'),
         ],
       ),
     );

@@ -1,0 +1,24 @@
+# Render blueprint for the MOTION Flutter Web frontend.
+#
+# Mirrors the deployed Render web service. The authoritative build is
+# `apps/mobile/scripts/build_render.sh`, which installs Flutter, runs pub get,
+# and builds `flutter build web --release` with API_BASE_URL baked in at
+# compile time (String.fromEnvironment in apps/mobile/lib/config.dart).
+#
+# API_BASE_URL is a build-time Dart define — it is passed by the build script
+# and defaults to the MOTION production API, so this is deterministic without
+# requiring dashboard state.
+
+services:
+  - type: static
+    name: motion-web
+    rootDir: apps/mobile
+    buildCommand: ./scripts/build_render.sh
+    publishPath: build/web
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    envVars:
+      - key: API_BASE_URL
+        sync: false
