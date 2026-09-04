@@ -95,16 +95,19 @@ test('bmoni: mock gateway works deterministically without credentials', async ()
 });
 
 test('bmoni: live mode requires credentials (fails loudly, never falls back to mock)', () => {
-  const prev = process.env.BMONI_MODE;
+  const prevMode = process.env.BMONI_MODE;
+  const prevKey = process.env.BMONI_API_KEY;
   process.env.BMONI_MODE = 'live';
   delete process.env.BMONI_API_KEY;
 
-  // config.bmoni.apiKey was loaded at import as empty; mode=live without a key
-  // must fail loudly rather than silently downgrading.
+  // mode=live without a key must fail loudly rather than silently downgrading,
+  // regardless of whether BMONI_API_KEY was present in the shell environment.
   assert.throws(() => bmoniConfig(), /BMONI_API_KEY/);
 
-  if (prev === undefined) delete process.env.BMONI_MODE;
-  else process.env.BMONI_MODE = prev;
+  if (prevMode === undefined) delete process.env.BMONI_MODE;
+  else process.env.BMONI_MODE = prevMode;
+  if (prevKey === undefined) delete process.env.BMONI_API_KEY;
+  else process.env.BMONI_API_KEY = prevKey;
 });
 
 test('bmoni: reward provider is honest (pending, never fabricates real money movement)', async () => {

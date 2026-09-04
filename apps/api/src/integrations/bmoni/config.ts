@@ -27,9 +27,11 @@ export function bmoniConfig(): BmoniConfig {
   const mode = (process.env.BMONI_MODE ?? 'mock') as BmoniConfig['mode'];
   const baseUrl = config.bmoni.baseUrl || (mode === 'live' ? 'https://embedded.bmoni.com' : 'https://embedded-dev.bmoni.com');
   const demoSandboxKey = process.env.BMONI_DEMO_SANDBOX_KEY ?? '';
-  const apiKey = config.bmoni.apiKey || (mode === 'sandbox' ? demoSandboxKey : '');
+  // Read the key live (not the import-time snapshot) so env changes are honoured,
+  // matching BMONI_MODE / BMONI_DEMO_SANDBOX_KEY above.
+  const apiKey = process.env.BMONI_API_KEY || (mode === 'sandbox' ? demoSandboxKey : '');
 
-  if (mode === 'live' && !config.bmoni.apiKey) {
+  if (mode === 'live' && !apiKey) {
     throw new Error(
       'BMONI_MODE=live requires BMONI_API_KEY. Get a production partner key, or use BMONI_MODE=sandbox with the development key.',
     );

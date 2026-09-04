@@ -19,8 +19,9 @@ const locationSchema = z.object({
 });
 
 function missionId(req: AuthedRequest): string {
+  // Express 5 types params as string | string[]; `/:id` never yields an array.
   const id = req.params.id;
-  if (!id) throw new NotFoundError('Mission not found');
+  if (typeof id !== 'string' || !id) throw new NotFoundError('Mission not found');
   return id;
 }
 
