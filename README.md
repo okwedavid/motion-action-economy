@@ -6,7 +6,7 @@ This is a **single monorepo** with two apps:
 
 | Path | What | Stack |
 |---|---|---|
-| `apps/api` | Backend API | Node ≥18, TypeScript (strict), Express, PostgreSQL (`pg`), `zod`, `bcryptjs`, `helmet` |
+| `apps/api` | Backend API | Node ≥18, TypeScript (strict), **Express 5**, PostgreSQL (`pg`), `zod`, `bcryptjs`, `helmet` |
 | `apps/mobile` | Client (Flutter) | Flutter, **Android + web**, `http`, `shared_preferences` |
 
 > **Read first:** `docs/IMPLEMENTATION_STATUS.md` — full feature matrix, verification status, security review, and known blockers/hand-offs.
@@ -46,7 +46,7 @@ flutter run -d emulator --dart-define=API_BASE_URL=http://10.0.2.2:4000
 flutter build appbundle --release
 ```
 
-**Note:** the Android `appbundle` build requires Android SDK **36** + BuildTools **28.0.3** + accepted licenses on the build machine (minSdk is 24 for the BMONI SDK). See `docs/IMPLEMENTATION_STATUS.md §7`.
+The release build is signed with a dedicated **upload keystore** when `android/key.properties` + `android/app/upload-keystore.jks` exist (both gitignored — **back them up**; losing them blocks Play Store updates). Without them, the build falls back to debug signing so `flutter run --release` keeps working. The Android build requires SDK 36 + BuildTools 36.0.0 + accepted licenses (minSdk is 24 for the BMONI SDK). See `docs/IMPLEMENTATION_STATUS.md §7`.
 
 ---
 

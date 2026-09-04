@@ -1,7 +1,7 @@
 # MOTION — Implementation Status
 
-**Date:** 2026-09-03
-**Scope:** Full-product sprint state. The previously locked-in, verified backend action-economy core was preserved and extended (wallet + BMONI adapter architecture + webhooks), then wrapped with a Flutter client, tests, CI, containerization, docs, and a security/QA pass.
+**Date:** 2026-09-04
+**Scope:** Full-product sprint state. The previously locked-in, verified backend action-economy core was preserved and extended (wallet + BMONI adapter architecture + webhooks), then wrapped with a Flutter client, tests, CI, containerization, docs, and a security/QA pass. **2026-09-04 updates:** Express 5 upgrade (audit clean), Android release appbundle now builds locally (SDK 36 + real upload keystore), Render deployment verified end-to-end.
 
 > **Product goal:** MOTION — "Move. Prove. Earn." An Action Economy platform:
 > DISCOVER → ACT → PROVE → EARN → WALLET → REPEAT.
@@ -24,10 +24,12 @@
 
 ## 2. Verification status (all re-run green in this sprint)
 
-- Backend: `npm run typecheck` ✅ · `npm run lint` (0 problems) ✅ · `npm run build` ✅ · `npm test` **47/47 pass** ✅.
+- Backend: `npm run typecheck` ✅ · `npm run lint` (0 problems) ✅ · `npm run build` ✅ · `npm test` **47/47 pass** ✅ (Express 5).
 - Backend runtime: `/health` 200; `/wallet`, `/wallet/balance`, `/webhooks/bmoni`, `/missions` all auth-guarded (401 unauthenticated) ✅.
 - Flutter: `flutter analyze` "No issues found!" ✅ · `flutter test` all pass ✅ · `flutter build web` success ✅.
-- **Blocked locally:** Android `appbundle` build (needs Android SDK 36 + BuildTools 28.0.3 + accepted licenses — see §7) · Docker build (Docker not installed on this machine — config files still written and reviewable).
+- **Android release:** `flutter build appbundle --release` ✅ — **48.3MB `app-release.aab`** built locally (Android SDK 36 + BuildTools 36.0.0 + NDK r28c + accepted licenses) and signed with a dedicated upload keystore (see §7).
+- **Production E2E (2026-09-04):** live API at `motion-action-economy.onrender.com` → register/login/`/auth/me`/`/home`/`/wallet` (mock BMONI, demo:true)/`/reputation` all verified with a throwaway account. Render web app (`motion-web-4je1.onrender.com`) boots in headless Chrome with the production API URL baked in; CORS preflight from the web origin passes.
+- **Blocked locally:** Docker build (Docker not installed on this machine — config files still written and reviewable).
 
 ---
 
@@ -87,26 +89,28 @@ Legend: ✅ COMPLETE & verified · ◐ PARTIAL / blocked externally · ❌ MISSI
 | Secrets | ✅ | `.env` gitignored; logger redacts sensitive fields |
 | **BMONI webhook security** | ✅ | HMAC-SHA256 over raw request bytes (`express.raw` mounted before global `express.json`), constant-time compare with length check first, `X-Webhook-Id` dedup, correct 2xx/4xx/5xx ack semantics, 10s timeout; secret from `BMONI_WEBHOOK_SECRET` |
 | Docker hardening | ✅ | non-root `USER app`, healthcheck, `.dockerignore`, compose `db` health-gated start |
-| Dependency audit | ⚠️ | `npm audit` → **3 moderate** `qs` advisories (array-limit-bypass DoS) in the `express@4.22.2`/`body-parser@1.20.6` chain. No non-breaking fix available (would require a major Express 5 upgrade). Latest 4.x installed. **Deferred & documented:** resolve by migrating to Express 5 / newer `qs`, or revisit when `npm audit fix` resolves. |
+| Dependency audit | ✅ | `npm audit` → **0 vulnerabilities**. Upgraded to **Express 5** (`express@5.2.1`, `@types/express@5`) — body-parser 2.x + `qs@6.16.0` clear the previously deferred `qs` advisories (incl. CVE-2026-82562). Runtime smoke-tested; `req.params` typing fix in `missions.ts`; BMONI config now reads `BMONI_API_KEY` live so the credentials guard is env-independent. |
 
 ---
 
 ## 6. Deployability
 
-- **CI:** API (install→lint→typecheck→build→test) and Mobile (pub get→analyze→test→build web) workflows. Tests run in-memory (`pg-mem`) so **no external DB/credentials needed for CI**.
+- **CI:** API (install→lint→typecheck→build→test) and Mobile (pub get→analyze→test→build web) workflows. Tests run in-memory (`pg-mem`) so **no external DB/credentials needed for CI**. API runs on **Express 5** (`express@5.2.1`).
 - **Docker:** multi-stage `apps/api/Dockerfile` (runtime runs `node dist/db/migrate.js && node dist/index.js`); `docker-compose.yml` wires Postgres 16 + API with health-gated depends_on, non-default secret sample, and volume. Docker build not run locally (Docker absent).
-- **Android release:** config may need SDK 36 + BuildTools 28.0.3 + accepted licenses locally; see §7 for exact steps. Signing/Play release requires a keystore (documented in README as a hand-off).
+- **Android release:** now builds locally (SDK 36 + BuildTools 36.0.0 + NDK r28c + accepted licenses). `flutter build appbundle --release` → `apps/mobile/build/app/outputs/bundle/release/app-release.aab` (48.3MB), **signed with a dedicated upload keystore** (`apps/mobile/android/app/upload-keystore.jks` + `key.properties`, both gitignored — **back these up**). Play upload still requires registering the app in the Play Console (hand-off).
+- **Render:** blueprint + build script verified — `render.yaml` (static `motion-web`, `rootDir: apps/mobile`, `publishPath: build/web`) matches the deployed service; `scripts/build_render.sh` installs Flutter 3.47.2 and bakes `API_BASE_URL` (default `https://motion-action-economy.onrender.com`) + `DEMO_MODE` at compile time. Live checks all green. `.env.example` CORS list was cleaned of a dead Vercel origin.
 
 ---
 
 ## 7. Blocked / hand-off items
 
-1. **Android local appbundle build** — `flutter doctor` reports Android toolchain needs SDK **36** + BuildTools **28.0.3** + accepted licenses. Install via Android Studio SDK Manager (or `sdkmanager "platforms;android-36" "build-tools;28.0.3"`), then `flutter doctor --android-licenses`. After that: `cd apps/mobile && flutter build appbundle --release`.
+1. **Play Console upload** — the release AAB is built and upload-signed, but the app must be registered in Google Play Console and the upload key certificate fingerprint (`SHA256: 32:E8:48:05:42:AF:42:F6:F8:A2:D6:92:5D:FF:50:60:01:A7:08:2C:E7:5D:82:78:AE:F1:F6:A7:6A:6A:45:E4`) enrolled there. **Back up `apps/mobile/android/app/upload-keystore.jks` + `key.properties` off-machine before publishing** — losing them blocks future updates.
 2. **Docker build** — install Docker, then `docker compose up --build`.
 3. **BMONI live** — requires `BMONI_MODE=live` + real `BMONI_API_KEY`/`BMONI_WEBHOOK_SECRET`; sandbox shared key is dev-only; mock mode is the non-blocking default and never fabricates data to the client.
+4. **Seed production missions** — the production API currently returns an empty `/missions` list (no seeded missions), so the quiz/QR/location earn flow cannot be exercised against production yet. Run `npm run db:seed` against the production DB.
 
 ---
 
 ## 8. Bottom line
 
-The **full MOTION loop is now implemented and test-backed**: action-economy core, wallet, BMONI adapter + webhook architecture, a Flutter client (web build green, Android config wired but not locally built), CI, Docker, and docs. The only local blockers are environment ones (Android SDK 36, Docker not installed) — not code defects, and both are documented with exact resolution steps.
+The **full MOTION loop is now implemented and test-backed**: action-economy core (Express 5, audit-clean), wallet, BMONI adapter + webhook architecture, a Flutter client with web (deployed on Render, production API verified E2E) and Android (release AAB building + upload-signed locally), CI, Docker, and docs. Remaining items are external hand-offs only: Play Console registration, Docker on this machine, BMONI live credentials, and seeding missions into the production DB.
